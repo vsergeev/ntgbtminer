@@ -94,7 +94,7 @@ def bin2hex(s):
         h += "%02x" % ord(c)
     return h
 
-# Convert an big endian ASCII Hex string to a binary string
+# Convert an ASCII Hex string to a binary string
 def hex2bin(s):
     b = ""
     for i in range(len(s)/2):
@@ -110,7 +110,9 @@ def bitcoinaddress2hash160(s):
     for i in range(len(s)):
         x += (58**i)*table.find(s[i])
 
+    # Convert number to ASCII Hex string
     x = "%050x" % x
+    # Discard 1-byte network byte at beginning and 4-byte checksum at the end
     return x[2:50-8]
 
 ################################################################################
@@ -163,7 +165,7 @@ def tx_make_coinbase(coinbase_script, address, value):
 # Compute the SHA256 Double Hash of a transaction
 #
 # Arguments:
-#       tx:    (hex string) transaction data
+#       tx:    (hex string) ASCII Hex transaction data
 #
 # Returns a SHA256 double hash in big endian ASCII Hex
 def tx_compute_hash(tx):
@@ -174,7 +176,7 @@ def tx_compute_hash(tx):
 # Compute the Merkle Root of a list of transaction hashes
 #
 # Arguments:
-#       tx_hashes:    (list) transaction hashes
+#       tx_hashes:    (list) ASCII Hex transaction hashes
 #
 # Returns a SHA256 double hash in big endian ASCII Hex
 def tx_compute_merkle_root(tx_hashes):
@@ -252,9 +254,9 @@ def block_bits2target(bits):
     shift = ord(hex2bin(bits[0:2])[0]) - 3
     value = hex2bin(bits[2:])
 
-    # Shift value to the left by shift (little endian)
+    # Shift value to the left by shift (big endian)
     target = value + "\x00"*shift
-    # Add leading zeros (little endian)
+    # Add leading zeros (big endian)
     target = "\x00"*(32-len(target)) + target
 
     return target
