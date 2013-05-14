@@ -387,7 +387,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 def standalone_miner(coinbase_message, address):
     while True:
         print "Mining new block template..."
-        mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=10)
+        mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=60)
         print "Average Mhash/s: %.4f\n" % (hps / 1000000.0)
 
         if mined_block != None:
