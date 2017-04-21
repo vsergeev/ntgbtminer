@@ -156,7 +156,7 @@ def encode_coinbase_height(n, min_size = 1):
 # Returns transaction data in ASCII Hex
 def tx_make_coinbase(coinbase_script, address, value, height):
     # See https://en.bitcoin.it/wiki/Transaction
-    
+
     coinbase_script = bin2hex(encode_coinbase_height(height)) + coinbase_script
 
     # Create a pubkey script
