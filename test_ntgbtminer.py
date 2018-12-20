@@ -51,11 +51,12 @@ class TestTransaction(unittest.TestCase):
         test_vector = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
 
         # Parameters to form coinbase transaction
-        coinbase_script = "03ef98030400001059124d696e656420627920425443204775696c640800000037000011ca"
+        coinbase_script = "0400001059124d696e656420627920425443204775696c640800000037000011ca"
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
         value = 2505860000
+        height = 235759
 
-        self.assertEqual(tx_make_coinbase(coinbase_script, address, value), test_vector)
+        self.assertEqual(tx_make_coinbase(coinbase_script, address, value, height), test_vector)
 
     def test_merkle_root(self):
         # Source Data
