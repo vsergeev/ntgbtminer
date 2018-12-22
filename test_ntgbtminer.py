@@ -131,7 +131,7 @@ class TestBlock(unittest.TestCase):
             block['transactions'].append(tx)
 
         # Setup generation transaction parameters with same extra nonce start as the mined black
-        coinbase_message = "03ef98030400001059124d696e656420627920425443204775696c640800000037"
+        coinbase_message = "0400001059124d696e656420627920425443204775696c640800000037"
         extra_nonce_start = 0xca110000
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
         block['coinbasevalue'] = 2505860000
