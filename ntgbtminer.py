@@ -65,7 +65,7 @@ def rpc(method, params=None):
 
 def rpc_getblocktemplate():
     try:
-        return rpc("getblocktemplate", [{}])
+        return rpc("getblocktemplate", [{"rules": ["segwit"]}])
     except ValueError:
         return {}
 
