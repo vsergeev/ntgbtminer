@@ -77,14 +77,6 @@ def int2varinthex(x):
     else:
         return "ff" + int2lehex(x, 8)
 
-# Convert a binary string to ASCII Hex
-def bin2hex(s):
-    return s.hex()
-
-# Convert an ASCII Hex string to a binary string
-def hex2bin(s):
-    return bytes.fromhex(s)
-
 # Convert a Base58 Bitcoin address to its Hash-160 ASCII Hex
 def bitcoinaddress2hash160(s):
     table = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -141,7 +133,7 @@ def encode_coinbase_height(n, min_size = 1):
 def tx_make_coinbase(coinbase_script, address, value, height):
     # See https://en.bitcoin.it/wiki/Transaction
 
-    coinbase_script = bin2hex(encode_coinbase_height(height)) + coinbase_script
+    coinbase_script = encode_coinbase_height(height).hex() + coinbase_script
 
     # Create a pubkey script
     # OP_DUP OP_HASH160 <len to push> <pubkey> OP_EQUALVERIFY OP_CHECKSIG
@@ -182,9 +174,7 @@ def tx_make_coinbase(coinbase_script, address, value, height):
 #
 # Returns a SHA256 double hash in big endian ASCII Hex
 def tx_compute_hash(tx):
-    h1 = hashlib.sha256(hex2bin(tx)).digest()
-    h2 = hashlib.sha256(h1).digest()
-    return bin2hex(h2[::-1])
+    return hashlib.sha256(hashlib.sha256(bytes.fromhex(tx)).digest()).digest()[::-1].hex()
 
 # Compute the Merkle Root of a list of transaction hashes
 #
@@ -196,7 +186,7 @@ def tx_compute_merkle_root(tx_hashes):
     # Convert each hash into a binary string
     for i in range(len(tx_hashes)):
         # Reverse the hash from big endian to little endian
-        tx_hashes[i] = hex2bin(tx_hashes[i])[::-1]
+        tx_hashes[i] = bytes.fromhex(tx_hashes[i])[::-1]
 
     # Iteratively compute the merkle root hash
     while len(tx_hashes) > 1:
@@ -215,7 +205,7 @@ def tx_compute_merkle_root(tx_hashes):
         tx_hashes = tx_hashes_new
 
     # Format the root in big endian ascii hex
-    return bin2hex(tx_hashes[0][::-1])
+    return tx_hashes[0][::-1].hex()
 
 ################################################################################
 # Block Preparation Functions
@@ -233,13 +223,13 @@ def block_form_header(block):
     # Version
     header += struct.pack("<L", block['version'])
     # Previous Block Hash
-    header += hex2bin(block['previousblockhash'])[::-1]
+    header += bytes.fromhex(block['previousblockhash'])[::-1]
     # Merkle Root Hash
-    header += hex2bin(block['merkleroot'])[::-1]
+    header += bytes.fromhex(block['merkleroot'])[::-1]
     # Time
     header += struct.pack("<L", block['curtime'])
     # Target Bits
-    header += hex2bin(block['bits'])[::-1]
+    header += bytes.fromhex(block['bits'])[::-1]
     # Nonce
     header += struct.pack("<L", block['nonce'])
 
@@ -264,7 +254,7 @@ def block_bits2target(bits):
     # Bits: 1b0404cb
     # 1b -> left shift of (0x1b - 3) bytes
     # 0404cb -> value
-    bits = hex2bin(bits)
+    bits = bytes.fromhex(bits)
     shift = bits[0] - 3
     value = bits[1:]
 
@@ -296,7 +286,7 @@ def block_make_submit(block):
     subm = ""
 
     # Block header
-    subm += bin2hex(block_form_header(block))
+    subm += block_form_header(block).hex()
     # Number of transactions as a varint
     subm += int2varinthex(len(block['transactions']))
     # Concatenated transactions data
@@ -368,7 +358,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
             # Check if it the block meets the target target hash
             if block_check_target(block_hash, target_hash):
                 block_template['nonce'] = nonce
-                block_template['hash'] = bin2hex(block_hash)
+                block_template['hash'] = block_hash.hex()
                 hps_average = 0 if len(hps_list) == 0 else sum(hps_list)/len(hps_list)
                 return (block_template, hps_average)
 
@@ -407,4 +397,4 @@ def standalone_miner(coinbase_message, address):
             rpc_submitblock(submission)
 
 if __name__ == "__main__":
-    standalone_miner(bin2hex("Hello from vsergeev!"), "15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv")
+    standalone_miner(b"Hello from vsergeev!".hex(), "15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv")

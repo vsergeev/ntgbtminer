@@ -172,12 +172,6 @@ class TestConversions(unittest.TestCase):
         self.assertEqual(int2varinthex(0x1a2b3c4d), "fe4d3c2b1a")
         self.assertEqual(int2varinthex(0x1a2b3c4d5e), "ff5e4d3c2b1a000000")
 
-    def test_bin2hex(self):
-        self.assertEqual(bin2hex(b"\x00\x01\xab\xcdA"), "0001abcd41")
-
-    def test_hex2bin(self):
-        self.assertEqual(hex2bin("0001abcd41"), b"\x00\x01\xab\xcdA")
-
     def bitcoinaddress2hash160(self):
         self.assertEqual(bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
 
@@ -232,7 +226,7 @@ class TestBlock(unittest.TestCase):
 
         bits = "1a01aa3d"
         vector = "00000000000001aa3d0000000000000000000000000000000000000000000000"
-        self.assertEqual(bin2hex(block_bits2target(bits)), vector)
+        self.assertEqual(block_bits2target(bits).hex(), vector)
 
         # Source Data
         #   Bits    1b0404cb
@@ -240,7 +234,7 @@ class TestBlock(unittest.TestCase):
 
         bits = "1b0404cb"
         vector = "00000000000404cb000000000000000000000000000000000000000000000000"
-        self.assertEqual(bin2hex(block_bits2target(bits)), vector)
+        self.assertEqual(block_bits2target(bits).hex(), vector)
 
     def test_block_hash(self):
         # Source Data
@@ -254,7 +248,7 @@ class TestBlock(unittest.TestCase):
 
         # Check block hash
         header = block_form_header(block)
-        header_hash = bin2hex(block_compute_raw_hash(header))
+        header_hash = block_compute_raw_hash(header).hex()
         self.assertEqual(header_hash, test_vector)
 
         # Check block hash meets or fails various targets
