@@ -71,10 +71,7 @@ def rpc_getblocktemplate():
 
 
 def rpc_submitblock(block_submission):
-    try:
-        return rpc("submitblock", [block_submission])
-    except ValueError:
-        return {}
+    return rpc("submitblock", [block_submission])
 
 
 ################################################################################
