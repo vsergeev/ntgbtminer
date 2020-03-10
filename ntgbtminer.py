@@ -147,33 +147,21 @@ def bitcoinaddress2hash160(addr):
 ################################################################################
 
 
-def tx_encode_coinbase_height(height, min_size=1):
+def tx_encode_coinbase_height(height):
     """
     Encode the coinbase height, as per BIP 34:
     https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki
 
     Arguments:
         height (int): height of the mined block
-        min_size (int): minimum size in bytes of encoded height
 
     Returns:
-        bytes: encoded height
+        string: encoded height as an ASCII hex string
     """
 
-    s = bytearray(b'\1')
+    width = (height.bit_length() + 7) // 8
 
-    while height > 127:
-        s[0] += 1
-        s.append(height % 256)
-        height //= 256
-
-    s.append(height)
-
-    while len(s) < min_size + 1:
-        s.append(0)
-        s[0] += 1
-
-    return bytes(s)
+    return bytes([width]).hex() + int2lehex(height, width)
 
 
 def tx_make_coinbase(coinbase_script, address, value, height):
@@ -192,7 +180,7 @@ def tx_make_coinbase(coinbase_script, address, value, height):
 
     # See https://en.bitcoin.it/wiki/Transaction
 
-    coinbase_script = tx_encode_coinbase_height(height).hex() + coinbase_script
+    coinbase_script = tx_encode_coinbase_height(height) + coinbase_script
 
     # Create a pubkey script
     # OP_DUP OP_HASH160 <len to push> <pubkey> OP_EQUALVERIFY OP_CHECKSIG
