@@ -154,9 +154,11 @@ block_vector = {
     "nextblockhash": "00000000000000aada29fb28a9dcb6891f7b5254ba77393c6e3a436d6e4f0090"
 }
 
+
 ################################################################################
 # Unit Tests
 ################################################################################
+
 
 class TestConversions(unittest.TestCase):
     def test_int2lehex(self):
@@ -174,6 +176,7 @@ class TestConversions(unittest.TestCase):
 
     def bitcoinaddress2hash160(self):
         self.assertEqual(ntgbtminer.bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
+
 
 class TestTransaction(unittest.TestCase):
     def test_hash(self):
@@ -218,6 +221,7 @@ class TestTransaction(unittest.TestCase):
 
         self.assertEqual(ntgbtminer.tx_compute_merkle_root(tx_hashes), test_vector)
 
+
 class TestBlock(unittest.TestCase):
     def test_bits2target(self):
         # Source Data
@@ -257,13 +261,13 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(header_hash < target_hash, True)
         header_hash = b'\x01' + header_hash[1:]
         self.assertEqual(header_hash < target_hash, False)
-        header_hash = b'\x00'*6 + b'\x02' + header_hash[8:]
+        header_hash = b'\x00' * 6 + b'\x02' + header_hash[8:]
         self.assertEqual(header_hash < target_hash, False)
-        header_hash = b'\x00'*6 + b'\x01' + header_hash[8:]
+        header_hash = b'\x00' * 6 + b'\x01' + header_hash[8:]
         self.assertEqual(header_hash < target_hash, True)
-        header_hash = b'\x00'*6 + b'\x01\xaa\x3c' + header_hash[10:]
+        header_hash = b'\x00' * 6 + b'\x01\xaa\x3c' + header_hash[10:]
         self.assertEqual(header_hash < target_hash, True)
-        header_hash = b'\x00'*6 + b'\x01\xaa\x3d' + header_hash[10:]
+        header_hash = b'\x00' * 6 + b'\x01\xaa\x3d' + header_hash[10:]
         self.assertEqual(header_hash < target_hash, False)
 
     def test_block_mine(self):
@@ -285,7 +289,7 @@ class TestBlock(unittest.TestCase):
         # Copy time key to curtime key to make block look like block template
         block['curtime'] = block['time']
         # Clear block hash
-        block['hash' ] = ""
+        block['hash'] = ""
 
         # Mine
         (mined_block, hps) = ntgbtminer.block_mine(block, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
@@ -295,6 +299,6 @@ class TestBlock(unittest.TestCase):
 
         self.assertEqual(mined_block['hash'], test_vector)
 
+
 if __name__ == "__main__":
     unittest.main()
-
