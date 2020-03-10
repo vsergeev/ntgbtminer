@@ -174,24 +174,11 @@ class TestConversions(unittest.TestCase):
         self.assertEqual(ntgbtminer.int2varinthex(0x1a2b3c4d), "fe4d3c2b1a")
         self.assertEqual(ntgbtminer.int2varinthex(0x1a2b3c4d5e), "ff5e4d3c2b1a000000")
 
-    def bitcoinaddress2hash160(self):
+    def test_bitcoinaddress2hash160(self):
         self.assertEqual(ntgbtminer.bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
 
 
 class TestTransaction(unittest.TestCase):
-    def test_hash(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        #   Transaction ID 05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1
-
-        # Test Vector is coinbase transaction hash
-        test_vector = "05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1"
-
-        # Coinbase transaction data
-        tx = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
-
-        self.assertEqual(ntgbtminer.tx_compute_hash(tx), test_vector)
-
     def test_make_coinbase(self):
         # Source Data
         #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
@@ -208,7 +195,20 @@ class TestTransaction(unittest.TestCase):
 
         self.assertEqual(ntgbtminer.tx_make_coinbase(coinbase_script, address, value, height), test_vector)
 
-    def test_merkle_root(self):
+    def test_compute_hash(self):
+        # Source Data
+        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
+        #   Transaction ID 05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1
+
+        # Test Vector is coinbase transaction hash
+        test_vector = "05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1"
+
+        # Coinbase transaction data
+        tx = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
+
+        self.assertEqual(ntgbtminer.tx_compute_hash(tx), test_vector)
+
+    def test_compute_merkle_root(self):
         # Source Data
         #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
         block = block_vector
