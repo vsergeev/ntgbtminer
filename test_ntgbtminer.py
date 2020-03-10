@@ -3,7 +3,7 @@ import unittest
 
 
 ################################################################################
-# Test Vector
+# Test Vectors
 ################################################################################
 
 # rpc_getblock("000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7")
@@ -155,6 +155,10 @@ block_vector = {
 }
 
 
+# rpc_getrawtransaction("05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1")
+coinbase_tx_vector = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
+
+
 ################################################################################
 # Unit Tests
 ################################################################################
@@ -180,84 +184,38 @@ class TestConversions(unittest.TestCase):
 
 class TestTransaction(unittest.TestCase):
     def test_make_coinbase(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        #   Transaction ID 05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1
-
-        # Test Vector is coinbase transaction data
-        test_vector = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
-
-        # Parameters to form coinbase transaction
         coinbase_script = "0400001059124d696e656420627920425443204775696c640800000037000011ca"
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
         value = 2505860000
         height = 235759
 
-        self.assertEqual(ntgbtminer.tx_make_coinbase(coinbase_script, address, value, height), test_vector)
+        self.assertEqual(ntgbtminer.tx_make_coinbase(coinbase_script, address, value, height), coinbase_tx_vector)
 
     def test_compute_hash(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        #   Transaction ID 05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1
-
-        # Test Vector is coinbase transaction hash
-        test_vector = "05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1"
-
-        # Coinbase transaction data
-        tx = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
-
-        self.assertEqual(ntgbtminer.tx_compute_hash(tx), test_vector)
+        self.assertEqual(ntgbtminer.tx_compute_hash(coinbase_tx_vector), "05f1f0c7fc25005e7c6e56805130b4d540125a8d09f81ec3da621f99ee5d15c1")
 
     def test_compute_merkle_root(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        block = block_vector
-
-        # Test Vector is block Merkle Root
-        test_vector = block['merkleroot']
-
-        # Transaction hash list
-        tx_hashes = block['tx']
-
-        self.assertEqual(ntgbtminer.tx_compute_merkle_root(tx_hashes), test_vector)
+        self.assertEqual(ntgbtminer.tx_compute_merkle_root(block_vector['tx']), block_vector['merkleroot'])
 
 
 class TestBlock(unittest.TestCase):
     def test_bits2target(self):
-        # Source Data
-        #   Bits    1a01aa3d
-        #   Target  00000000000001aa3d0000000000000000000000000000000000000000000000
-
-        bits = "1a01aa3d"
-        vector = "00000000000001aa3d0000000000000000000000000000000000000000000000"
-        self.assertEqual(ntgbtminer.block_bits2target(bits).hex(), vector)
-
-        # Source Data
-        #   Bits    1b0404cb
-        #   Target  00000000000404cb000000000000000000000000000000000000000000000000
-
-        bits = "1b0404cb"
-        vector = "00000000000404cb000000000000000000000000000000000000000000000000"
-        self.assertEqual(ntgbtminer.block_bits2target(bits).hex(), vector)
+        self.assertEqual(ntgbtminer.block_bits2target("1a01aa3d").hex(), "00000000000001aa3d0000000000000000000000000000000000000000000000")
+        self.assertEqual(ntgbtminer.block_bits2target("1b0404cb").hex(), "00000000000404cb000000000000000000000000000000000000000000000000")
 
     def test_block_hash(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        block = block_vector
+        # Copy time key to curtime key to make block vector look like block template
+        block_vector['curtime'] = block_vector['time']
 
-        # Test Vector is block hash
-        test_vector = block['hash']
-        # Copy time key to curtime key to make block look like block template
-        block['curtime'] = block['time']
+        # Form block header and hash
+        header = ntgbtminer.block_form_header(block_vector)
+        header_hash = ntgbtminer.block_compute_raw_hash(header)
 
-        # Check block hash
-        header = ntgbtminer.block_form_header(block)
-        header_hash = ntgbtminer.block_compute_raw_hash(header).hex()
-        self.assertEqual(header_hash, test_vector)
+        # Verify block hash
+        self.assertEqual(header_hash.hex(), block_vector['hash'])
 
         # Check block hash meets or fails various targets
-        header_hash = ntgbtminer.block_compute_raw_hash(header)
-        target_hash = ntgbtminer.block_bits2target(block['bits'])
+        target_hash = ntgbtminer.block_bits2target(block_vector['bits'])
         self.assertEqual(header_hash < target_hash, True)
         header_hash = b'\x01' + header_hash[1:]
         self.assertEqual(header_hash < target_hash, False)
@@ -271,33 +229,28 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(header_hash < target_hash, False)
 
     def test_block_mine(self):
-        # Source Data
-        #   Block ID 000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7
-        block = block_vector
-
         # Manipulate the transactions in real block to look like a block template
-        block['transactions'] = []
-        for i in range(1, len(block['tx'])):
-            tx = {'hash': block['tx'][i], 'data': 'abc'}
-            block['transactions'].append(tx)
+        block_vector['transactions'] = []
+        for i in range(1, len(block_vector['tx'])):
+            tx = {'hash': block_vector['tx'][i], 'data': 'abc'}
+            block_vector['transactions'].append(tx)
 
         # Setup generation transaction parameters with same extra nonce start as the mined black
         coinbase_message = "0400001059124d696e656420627920425443204775696c640800000037"
         extra_nonce_start = 0xca110000
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
-        block['coinbasevalue'] = 2505860000
+        block_vector['coinbasevalue'] = 2505860000
+
         # Copy time key to curtime key to make block look like block template
-        block['curtime'] = block['time']
+        block_vector['curtime'] = block_vector['time']
+
         # Clear block hash
-        block['hash'] = ""
+        block_vector['hash'] = ""
 
         # Mine
-        (mined_block, hps) = ntgbtminer.block_mine(block, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
+        (mined_block, hps) = ntgbtminer.block_mine(block_vector, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
 
-        # Test vector is actual block hash
-        test_vector = "000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7"
-
-        self.assertEqual(mined_block['hash'], test_vector)
+        self.assertEqual(mined_block['hash'], "000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7")
 
 
 if __name__ == "__main__":
