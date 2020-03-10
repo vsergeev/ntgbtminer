@@ -15,15 +15,14 @@ import hashlib
 import struct
 import random
 import time
+import os
 
 # JSON-HTTP RPC Configuration
 # This will be particular to your local ~/.bitcoin/bitcoin.conf
 
-# Edit me! v
-RPC_URL = "http://127.0.0.1:8332"
-RPC_USER = "bitcoinrpc"
-RPC_PASS = ""
-# Edit me! ^
+RPC_URL = os.environ.get("RPC_URL", "http://127.0.0.1:8332")
+RPC_USER = os.environ.get("RPC_USER", "bitcoinrpc")
+RPC_PASS = os.environ.get("RPC_PASS", "")
 
 ################################################################################
 # Bitcoin Daemon JSON-HTTP RPC
