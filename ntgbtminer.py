@@ -461,7 +461,10 @@ def standalone_miner(coinbase_message, address):
             print("Solved a block! Block hash: {}".format(mined_block['hash']))
             submission = block_make_submit(mined_block)
             print("Submitting:", submission, "\n")
-            rpc_submitblock(submission)
+            response = rpc_submitblock(submission)
+            if response is not None:
+                print("Submission Error: {}".format(response))
+                break
 
 
 if __name__ == "__main__":
