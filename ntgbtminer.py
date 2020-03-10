@@ -1,9 +1,9 @@
-# ntgbtminer - vsergeev at gmail
+# ntgbtminer - vsergeev - https://github.com/vsergeev/ntgbtminer
 # No Thrils GetBlockTemplate Bitcoin Miner
 #
 # This is mostly a demonstration of the GBT protocol.
-# It mines at a measly 150 KHashes/sec on my computer
-# but with a whole lot of spirit ;)
+# It mines at a measly 550 KH/s on my computer, but
+# with a whole lot of spirit ;)
 #
 
 import urllib.request
