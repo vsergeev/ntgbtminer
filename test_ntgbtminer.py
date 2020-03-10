@@ -1,4 +1,4 @@
-from ntgbtminer import *
+import ntgbtminer
 import unittest
 
 
@@ -160,20 +160,20 @@ block_vector = {
 
 class TestConversions(unittest.TestCase):
     def test_int2lehex(self):
-        self.assertEqual(int2lehex(0x1a, 1), "1a")
-        self.assertEqual(int2lehex(0x1a2b, 2), "2b1a")
-        self.assertEqual(int2lehex(0x1a2b3c4d, 4), "4d3c2b1a")
-        self.assertEqual(int2lehex(0x1a2b3c4d5e6f7a8b, 8), "8b7a6f5e4d3c2b1a")
+        self.assertEqual(ntgbtminer.int2lehex(0x1a, 1), "1a")
+        self.assertEqual(ntgbtminer.int2lehex(0x1a2b, 2), "2b1a")
+        self.assertEqual(ntgbtminer.int2lehex(0x1a2b3c4d, 4), "4d3c2b1a")
+        self.assertEqual(ntgbtminer.int2lehex(0x1a2b3c4d5e6f7a8b, 8), "8b7a6f5e4d3c2b1a")
 
     def test_int2varinthex(self):
-        self.assertEqual(int2varinthex(0x1a), "1a")
-        self.assertEqual(int2varinthex(0x1a2b), "fd2b1a")
-        self.assertEqual(int2varinthex(0x1a2b3c), "fe3c2b1a00")
-        self.assertEqual(int2varinthex(0x1a2b3c4d), "fe4d3c2b1a")
-        self.assertEqual(int2varinthex(0x1a2b3c4d5e), "ff5e4d3c2b1a000000")
+        self.assertEqual(ntgbtminer.int2varinthex(0x1a), "1a")
+        self.assertEqual(ntgbtminer.int2varinthex(0x1a2b), "fd2b1a")
+        self.assertEqual(ntgbtminer.int2varinthex(0x1a2b3c), "fe3c2b1a00")
+        self.assertEqual(ntgbtminer.int2varinthex(0x1a2b3c4d), "fe4d3c2b1a")
+        self.assertEqual(ntgbtminer.int2varinthex(0x1a2b3c4d5e), "ff5e4d3c2b1a000000")
 
     def bitcoinaddress2hash160(self):
-        self.assertEqual(bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
+        self.assertEqual(ntgbtminer.bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
 
 class TestTransaction(unittest.TestCase):
     def test_hash(self):
@@ -187,7 +187,7 @@ class TestTransaction(unittest.TestCase):
         # Coinbase transaction data
         tx = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503ef98030400001059124d696e656420627920425443204775696c640800000037000011caffffffff01a0635c95000000001976a91427a1f12771de5cc3b73941664b2537c15316be4388ac00000000"
 
-        self.assertEqual(tx_compute_hash(tx), test_vector)
+        self.assertEqual(ntgbtminer.tx_compute_hash(tx), test_vector)
 
     def test_make_coinbase(self):
         # Source Data
@@ -203,7 +203,7 @@ class TestTransaction(unittest.TestCase):
         value = 2505860000
         height = 235759
 
-        self.assertEqual(tx_make_coinbase(coinbase_script, address, value, height), test_vector)
+        self.assertEqual(ntgbtminer.tx_make_coinbase(coinbase_script, address, value, height), test_vector)
 
     def test_merkle_root(self):
         # Source Data
@@ -216,7 +216,7 @@ class TestTransaction(unittest.TestCase):
         # Transaction hash list
         tx_hashes = block['tx']
 
-        self.assertEqual(tx_compute_merkle_root(tx_hashes), test_vector)
+        self.assertEqual(ntgbtminer.tx_compute_merkle_root(tx_hashes), test_vector)
 
 class TestBlock(unittest.TestCase):
     def test_bits2target(self):
@@ -226,7 +226,7 @@ class TestBlock(unittest.TestCase):
 
         bits = "1a01aa3d"
         vector = "00000000000001aa3d0000000000000000000000000000000000000000000000"
-        self.assertEqual(block_bits2target(bits).hex(), vector)
+        self.assertEqual(ntgbtminer.block_bits2target(bits).hex(), vector)
 
         # Source Data
         #   Bits    1b0404cb
@@ -234,7 +234,7 @@ class TestBlock(unittest.TestCase):
 
         bits = "1b0404cb"
         vector = "00000000000404cb000000000000000000000000000000000000000000000000"
-        self.assertEqual(block_bits2target(bits).hex(), vector)
+        self.assertEqual(ntgbtminer.block_bits2target(bits).hex(), vector)
 
     def test_block_hash(self):
         # Source Data
@@ -247,24 +247,24 @@ class TestBlock(unittest.TestCase):
         block['curtime'] = block['time']
 
         # Check block hash
-        header = block_form_header(block)
-        header_hash = block_compute_raw_hash(header).hex()
+        header = ntgbtminer.block_form_header(block)
+        header_hash = ntgbtminer.block_compute_raw_hash(header).hex()
         self.assertEqual(header_hash, test_vector)
 
         # Check block hash meets or fails various targets
-        header_hash = block_compute_raw_hash(header)
-        target_hash = block_bits2target(block['bits'])
-        self.assertEqual(block_check_target(header_hash, target_hash), True)
+        header_hash = ntgbtminer.block_compute_raw_hash(header)
+        target_hash = ntgbtminer.block_bits2target(block['bits'])
+        self.assertEqual(header_hash < target_hash, True)
         header_hash = b'\x01' + header_hash[1:]
-        self.assertEqual(block_check_target(header_hash, target_hash), False)
+        self.assertEqual(header_hash < target_hash, False)
         header_hash = b'\x00'*6 + b'\x02' + header_hash[8:]
-        self.assertEqual(block_check_target(header_hash, target_hash), False)
+        self.assertEqual(header_hash < target_hash, False)
         header_hash = b'\x00'*6 + b'\x01' + header_hash[8:]
-        self.assertEqual(block_check_target(header_hash, target_hash), True)
+        self.assertEqual(header_hash < target_hash, True)
         header_hash = b'\x00'*6 + b'\x01\xaa\x3c' + header_hash[10:]
-        self.assertEqual(block_check_target(header_hash, target_hash), True)
+        self.assertEqual(header_hash < target_hash, True)
         header_hash = b'\x00'*6 + b'\x01\xaa\x3d' + header_hash[10:]
-        self.assertEqual(block_check_target(header_hash, target_hash), False)
+        self.assertEqual(header_hash < target_hash, False)
 
     def test_block_mine(self):
         # Source Data
@@ -288,7 +288,7 @@ class TestBlock(unittest.TestCase):
         block['hash' ] = ""
 
         # Mine
-        (mined_block, hps) = block_mine(block, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
+        (mined_block, hps) = ntgbtminer.block_mine(block, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
 
         # Test vector is actual block hash
         test_vector = "000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7"
