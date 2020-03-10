@@ -16,6 +16,7 @@ import struct
 import random
 import time
 import os
+import sys
 
 # JSON-HTTP RPC Configuration
 # This will be particular to your local ~/.bitcoin/bitcoin.conf
@@ -479,4 +480,8 @@ def standalone_miner(coinbase_message, address):
 
 
 if __name__ == "__main__":
-    standalone_miner(b"Hello from vsergeev!".hex(), "15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv")
+    if len(sys.argv) < 3:
+        print("Usage: {:s} <coinbase message> <block reward address>".format(sys.argv[0]))
+        sys.exit(1)
+
+    standalone_miner(sys.argv[1].encode().hex(), sys.argv[2])
