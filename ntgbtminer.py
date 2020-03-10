@@ -58,16 +58,6 @@ def rpc_submitblock(block_submission):
     try: return rpc("submitblock", [block_submission])
     except ValueError: return {}
 
-# For unittest purposes:
-
-def rpc_getblock(block_id):
-    try: return rpc("getblock", [block_id])
-    except ValueError: return {}
-
-def rpc_getrawtransaction(transaction_id):
-    try: return rpc("getrawtransaction", [transaction_id])
-    except ValueError: return {}
-
 ################################################################################
 # Representation Conversion Utility Functions
 ################################################################################
