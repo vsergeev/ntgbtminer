@@ -265,16 +265,6 @@ def block_bits2target(bits):
 
     return target
 
-# Check if a block header hash meets the target hash
-#
-# Arguments:
-#       block_hash: (string) block hash in big endian binary
-#       target:     (string) target in big endian binary
-#
-# Returns true if header_hash meets target, false if it does not.
-def block_check_target(block_hash, target_hash):
-    # Header hash must be strictly less than or equal to target hash
-    return block_hash < target_hash
 
 # Format a solved block into the ASCII Hex submit format
 #
@@ -356,7 +346,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
             block_hash = block_compute_raw_hash(block_header)
 
             # Check if it the block meets the target target hash
-            if block_check_target(block_hash, target_hash):
+            if block_hash < target_hash:
                 block_template['nonce'] = nonce
                 block_template['hash'] = block_hash.hex()
                 hps_average = 0 if len(hps_list) == 0 else sum(hps_list)/len(hps_list)
