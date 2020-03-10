@@ -6,7 +6,9 @@
 # but with a whole lot of spirit ;)
 #
 
-import urllib2
+import urllib.request
+import urllib.error
+import urllib.parse
 import base64
 import json
 import hashlib
@@ -29,21 +31,18 @@ RPC_PASS    = ""
 
 def rpc(method, params=None):
     rpc_id = random.getrandbits(32)
+    data = json.dumps({"id": rpc_id, "method": method, "params": params}).encode()
+    auth = base64.encodebytes((RPC_USER + ":" + RPC_PASS).encode()).decode().strip()
 
-    callstr = json.dumps({"id": rpc_id, "method": method, "params": params})
+    request = urllib.request.Request(RPC_URL, data, {"Authorization": "Basic {:s}".format(auth)})
 
-    authstr = base64.encodestring('%s:%s' % (RPC_USER, RPC_PASS)).strip()
-
-    request = urllib2.Request(RPC_URL)
-    request.add_header("Authorization", "Basic %s" % authstr)
-    request.add_data(callstr)
-    f = urllib2.urlopen(request)
-    response = json.loads(f.read())
+    with urllib.request.urlopen(request) as f:
+        response = json.loads(f.read())
 
     if response['id'] != rpc_id:
-        raise ValueError("invalid response id!")
+        raise ValueError("Invalid response id: got {}, expected {:u}".format(response['id'], rpc_id))
     elif response['error'] != None:
-        raise ValueError("rpc error: %s" % json.dumps(response['error']))
+        raise ValueError("RPC error: {:s}".format(json.dumps(response['error'])))
 
     return response['result']
 
@@ -75,31 +74,26 @@ def rpc_getrawtransaction(transaction_id):
 
 # Convert an unsigned integer to a little endian ASCII Hex
 def int2lehex(x, width):
-    if width == 1: return "%02x" % x
-    elif width == 2: return "".join(["%02x" % ord(c) for c in struct.pack("<H", x)])
-    elif width == 4: return "".join(["%02x" % ord(c) for c in struct.pack("<L", x)])
-    elif width == 8: return "".join(["%02x" % ord(c) for c in struct.pack("<Q", x)])
+    return x.to_bytes(width, byteorder='little').hex()
 
 # Convert an unsigned integer to little endian varint ASCII Hex
 def int2varinthex(x):
-    if x < 0xfd: return "%02x" % x
-    elif x <= 0xffff: return "fd" + int2lehex(x, 2)
-    elif x <= 0xffffffff: return "fe" + int2lehex(x, 4)
-    else: return "ff" + int2lehex(x, 8)
+    if x < 0xfd:
+        return x.to_bytes(1, byteorder='little').hex()
+    elif x <= 0xffff:
+        return "fd" + int2lehex(x, 2)
+    elif x <= 0xffffffff:
+        return "fe" + int2lehex(x, 4)
+    else:
+        return "ff" + int2lehex(x, 8)
 
 # Convert a binary string to ASCII Hex
 def bin2hex(s):
-    h = ""
-    for c in s:
-        h += "%02x" % ord(c)
-    return h
+    return s.hex()
 
 # Convert an ASCII Hex string to a binary string
 def hex2bin(s):
-    b = ""
-    for i in range(len(s)/2):
-        b += chr(int(s[2*i : 2*i + 2], 16))
-    return b
+    return bytes.fromhex(s)
 
 # Convert a Base58 Bitcoin address to its Hash-160 ASCII Hex
 def bitcoinaddress2hash160(s):
@@ -173,7 +167,7 @@ def tx_make_coinbase(coinbase_script, address, value, height):
     # input[0] prev seqnum
     tx += "ffffffff"
     # input[0] script len
-    tx += int2varinthex(len(coinbase_script)/2)
+    tx += int2varinthex(len(coinbase_script) // 2)
     # input[0] script
     tx += coinbase_script
     # input[0] seqnum
@@ -183,7 +177,7 @@ def tx_make_coinbase(coinbase_script, address, value, height):
     # output[0] value (little endian)
     tx += int2lehex(value, 8)
     # output[0] script len
-    tx += int2varinthex(len(pubkey_script)/2)
+    tx += int2varinthex(len(pubkey_script) // 2)
     # output[0] script
     tx += pubkey_script
     # lock-time
@@ -221,7 +215,7 @@ def tx_compute_merkle_root(tx_hashes):
             tx_hashes.append(tx_hashes[-1][:])
 
         tx_hashes_new = []
-        for i in range(len(tx_hashes)/2):
+        for i in range(len(tx_hashes) // 2):
             # Concatenate the next two
             concat = tx_hashes.pop(0) + tx_hashes.pop(0)
             # Hash them
@@ -244,7 +238,7 @@ def tx_compute_merkle_root(tx_hashes):
 #
 # Returns a binary string
 def block_form_header(block):
-    header = ""
+    header = b""
 
     # Version
     header += struct.pack("<L", block['version'])
@@ -280,13 +274,14 @@ def block_bits2target(bits):
     # Bits: 1b0404cb
     # 1b -> left shift of (0x1b - 3) bytes
     # 0404cb -> value
-    shift = ord(hex2bin(bits[0:2])[0]) - 3
-    value = hex2bin(bits[2:])
+    bits = hex2bin(bits)
+    shift = bits[0] - 3
+    value = bits[1:]
 
     # Shift value to the left by shift (big endian)
-    target = value + "\x00"*shift
+    target = value + b"\x00" * shift
     # Add leading zeros (big endian)
-    target = "\x00"*(32-len(target)) + target
+    target = b"\x00" * (32 - len(target)) + target
 
     return target
 
@@ -299,13 +294,7 @@ def block_bits2target(bits):
 # Returns true if header_hash meets target, false if it does not.
 def block_check_target(block_hash, target_hash):
     # Header hash must be strictly less than or equal to target hash
-    for i in range(len(block_hash)):
-        if ord(block_hash[i]) == ord(target_hash[i]):
-            continue
-        elif ord(block_hash[i]) < ord(target_hash[i]):
-            return True
-        else:
-            return False
+    return block_hash < target_hash
 
 # Format a solved block into the ASCII Hex submit format
 #
@@ -355,7 +344,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
     target_hash = block_bits2target(block_template['bits'])
 
     # Mark our mine start time
-    time_start = time.clock()
+    time_start = time.time()
 
     # Initialize our running average of hashes per second
     hps_list = []
@@ -376,13 +365,13 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         # Reform the block header
         block_header = block_form_header(block_template)
 
-        time_stamp = time.clock()
+        time_stamp = time.time()
 
         # Loop through the nonce
         nonce = 0 if debugnonce_start == False else debugnonce_start
         while nonce <= 0xffffffff:
             # Update the block header with the new 32-bit nonce
-            block_header = block_header[0:76] + chr(nonce & 0xff) + chr((nonce >> 8) & 0xff) + chr((nonce >> 16) & 0xff) + chr((nonce >> 24) & 0xff)
+            block_header = block_header[0:76] + nonce.to_bytes(4, byteorder='little')
             # Recompute the block hash
             block_hash = block_compute_raw_hash(block_header)
 
@@ -395,9 +384,9 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 
             # Lightweight benchmarking of hashes / sec and timeout check
             if nonce > 0 and nonce % 1000000 == 0:
-                time_elapsed = time.clock() - time_stamp
+                time_elapsed = time.time() - time_stamp
                 hps_list.append(1000000.0 / time_elapsed)
-                time_stamp = time.clock()
+                time_stamp = time.time()
 
                 # If our mine time expired, return none
                 if timeout != False and (time_stamp - time_start) > timeout:
@@ -417,14 +406,14 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 
 def standalone_miner(coinbase_message, address):
     while True:
-        print "Mining new block template..."
+        print("Mining new block template...")
         mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=60)
-        print "Average Mhash/s: %.4f\n" % (hps / 1000000.0)
+        print("Average Mhash/s: %.4f\n" % (hps / 1000000.0))
 
         if mined_block != None:
-            print "Solved a block! Block hash:", mined_block['hash']
+            print("Solved a block! Block hash:", mined_block['hash'])
             submission = block_make_submit(mined_block)
-            print "Submitting:", submission, "\n"
+            print("Submitting:", submission, "\n")
             rpc_submitblock(submission)
 
 if __name__ == "__main__":

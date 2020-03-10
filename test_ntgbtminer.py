@@ -173,10 +173,10 @@ class TestConversions(unittest.TestCase):
         self.assertEqual(int2varinthex(0x1a2b3c4d5e), "ff5e4d3c2b1a000000")
 
     def test_bin2hex(self):
-        self.assertEqual(bin2hex("\x00\x01\xab\xcdA"), "0001abcd41")
+        self.assertEqual(bin2hex(b"\x00\x01\xab\xcdA"), "0001abcd41")
 
     def test_hex2bin(self):
-        self.assertEqual(hex2bin("0001abcd41"), "\x00\x01\xab\xcdA")
+        self.assertEqual(hex2bin("0001abcd41"), b"\x00\x01\xab\xcdA")
 
     def bitcoinaddress2hash160(self):
         self.assertEqual(bitcoinaddress2hash160("14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"), "27a1f12771de5cc3b73941664b2537c15316be43")
@@ -261,15 +261,15 @@ class TestBlock(unittest.TestCase):
         header_hash = block_compute_raw_hash(header)
         target_hash = block_bits2target(block['bits'])
         self.assertEqual(block_check_target(header_hash, target_hash), True)
-        header_hash = '\x01' + header_hash[1:]
+        header_hash = b'\x01' + header_hash[1:]
         self.assertEqual(block_check_target(header_hash, target_hash), False)
-        header_hash = '\x00'*6 + '\x02' + header_hash[8:]
+        header_hash = b'\x00'*6 + b'\x02' + header_hash[8:]
         self.assertEqual(block_check_target(header_hash, target_hash), False)
-        header_hash = '\x00'*6 + '\x01' + header_hash[8:]
+        header_hash = b'\x00'*6 + b'\x01' + header_hash[8:]
         self.assertEqual(block_check_target(header_hash, target_hash), True)
-        header_hash = '\x00'*6 + '\x01\xaa\x3c' + header_hash[10:]
+        header_hash = b'\x00'*6 + b'\x01\xaa\x3c' + header_hash[10:]
         self.assertEqual(block_check_target(header_hash, target_hash), True)
-        header_hash = '\x00'*6 + '\x01\xaa\x3d' + header_hash[10:]
+        header_hash = b'\x00'*6 + b'\x01\xaa\x3d' + header_hash[10:]
         self.assertEqual(block_check_target(header_hash, target_hash), False)
 
     def test_block_mine(self):
