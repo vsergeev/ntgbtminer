@@ -183,6 +183,9 @@ class TestConversions(unittest.TestCase):
 
 
 class TestTransaction(unittest.TestCase):
+    def test_encode_coinbase_height(self):
+        self.assertEqual(ntgbtminer.tx_encode_coinbase_height(235759), "03ef9803")
+
     def test_make_coinbase(self):
         coinbase_script = "0400001059124d696e656420627920425443204775696c640800000037000011ca"
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
