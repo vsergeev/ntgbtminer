@@ -211,7 +211,7 @@ class TestBlock(unittest.TestCase):
         block_vector['curtime'] = block_vector['time']
 
         # Form block header and hash
-        header = ntgbtminer.block_form_header(block_vector)
+        header = ntgbtminer.block_make_header(block_vector)
         header_hash = ntgbtminer.block_compute_raw_hash(header)
 
         # Verify block hash

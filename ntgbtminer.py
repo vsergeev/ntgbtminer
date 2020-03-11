@@ -269,9 +269,9 @@ def tx_compute_merkle_root(tx_hashes):
 ################################################################################
 
 
-def block_form_header(block):
+def block_make_header(block):
     """
-    Form the block header.
+    Make the block header.
 
     Arguments:
         block (dict): block template
@@ -352,7 +352,7 @@ def block_make_submit(block):
     submission = ""
 
     # Block header
-    submission += block_form_header(block).hex()
+    submission += block_make_header(block).hex()
     # Number of transactions as a varint
     submission += int2varinthex(len(block['transactions']))
     # Concatenated transactions data
@@ -413,7 +413,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         block_template['merkleroot'] = tx_compute_merkle_root([tx['hash'] for tx in block_template['transactions']])
 
         # Reform the block header
-        block_header = block_form_header(block_template)
+        block_header = block_make_header(block_template)
 
         time_stamp = time.time()
 
