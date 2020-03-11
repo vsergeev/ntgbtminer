@@ -382,8 +382,8 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         debugnonce_start (int): nonce start for testing purposes
 
     Returns:
-        (block submission, hashes per second) on success,
-        (None, hashes per second) on timeout or nonce exhaustion.
+        (block submission, hash rate) on success,
+        (None, hash rate) on timeout or nonce exhaustion.
     """
     # Add an empty coinbase transaction to the block template transactions
     coinbase_tx = {}
@@ -399,7 +399,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
     time_start = time.time()
 
     # Initialize our running average of hashes per second
-    hps_list = []
+    hash_rate, hash_rate_count = 0.0, 0
 
     # Loop through the extranonce
     extranonce = extranonce_start
@@ -430,23 +430,24 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
             if block_hash < target_hash:
                 block_template['nonce'] = nonce
                 block_template['hash'] = block_hash.hex()
-                return (block_template, hps_list and sum(hps_list) / len(hps_list) or 0)
+                return (block_template, hash_rate)
 
-            # Lightweight benchmarking of hashes / sec and timeout check
-            if nonce > 0 and nonce % 1000000 == 0:
-                time_elapsed = time.time() - time_stamp
-                hps_list.append(1000000.0 / time_elapsed)
+            # Measure hash rate and check timeout
+            if nonce > 0 and nonce % 1048576 == 0:
+                hash_rate = hash_rate + ((1048576 / (time.time() - time_stamp)) - hash_rate) / (hash_rate_count + 1)
+                hash_rate_count += 1
+
                 time_stamp = time.time()
 
                 # If our mine time expired, return none
                 if timeout and (time_stamp - time_start) > timeout:
-                    return (None, hps_list and sum(hps_list) / len(hps_list) or 0)
+                    return (None, hash_rate)
 
             nonce += 1
         extranonce += 1
 
     # If we ran out of extra nonces, return none
-    return (None, hps_list and sum(hps_list) / len(hps_list) or 0)
+    return (None, hash_rate)
 
 
 ################################################################################
