@@ -131,8 +131,8 @@ def bitcoinaddress2hash160(addr):
 
     hash160 = 0
     addr = addr[::-1]
-    for i in range(len(addr)):
-        hash160 += (58 ** i) * table.find(addr[i])
+    for i, c in enumerate(addr):
+        hash160 += (58 ** i) * table.find(c)
 
     # Convert number to 50-byte ASCII Hex string
     hash160 = "{:050x}".format(hash160)
