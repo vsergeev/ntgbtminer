@@ -1,4 +1,5 @@
 # ntgbtminer - vsergeev - https://github.com/vsergeev/ntgbtminer
+#
 # No Thrils GetBlockTemplate Bitcoin Miner
 #
 # This is mostly a demonstration of the GBT protocol.
@@ -120,7 +121,7 @@ def bitcoinaddress2hash160(addr):
     Convert a Base58 Bitcoin address to its Hash-160 ASCII hex string.
 
     Args:
-        addr (string): Base58 bitcoin address
+        addr (string): Base58 Bitcoin address
 
     Returns:
         string: Hash-160 ASCII hex string
@@ -133,8 +134,9 @@ def bitcoinaddress2hash160(addr):
     for i in range(len(addr)):
         hash160 += (58 ** i) * table.find(addr[i])
 
-    # Convert number to ASCII Hex string
+    # Convert number to 50-byte ASCII Hex string
     hash160 = "{:050x}".format(hash160)
+
     # Discard 1-byte network byte at beginning and 4-byte checksum at the end
     return hash160[2:50 - 8]
 
@@ -163,7 +165,7 @@ def tx_encode_coinbase_height(height):
 
 def tx_make_coinbase(coinbase_script, address, value, height):
     """
-    Create a coinbase transaction
+    Create a coinbase transaction.
 
     Arguments:
         coinbase_script (string): arbitrary script as an ASCII hex string
@@ -200,7 +202,7 @@ def tx_make_coinbase(coinbase_script, address, value, height):
     tx += "ffffffff"
     # out-counter
     tx += "01"
-    # output[0] value (little endian)
+    # output[0] value
     tx += int2lehex(value, 8)
     # output[0] script len
     tx += int2varinthex(len(pubkey_script) // 2)
@@ -231,10 +233,10 @@ def tx_compute_merkle_root(tx_hashes):
     Compute the Merkle Root of a list of transaction hashes.
 
     Arguments:
-        tx_hashes (list): list of ASCII hex transaction hash strings
+        tx_hashes (list): list of transaction hashes as ASCII hex strings
 
     Returns:
-        string: Merkle root as a big endian ASCII hex string
+        string: merkle root as a big endian ASCII hex string
     """
 
     # Convert list of ASCII hex transaction hashes into bytes
@@ -361,7 +363,7 @@ def block_make_submit(block):
 
 
 ################################################################################
-# Mining Loop
+# Block Miner
 ################################################################################
 
 
@@ -373,7 +375,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         block_template (dict): block template
         coinbase_message (bytes): binary string for coinbase script
         extranonce_start (int): extranonce offset for coinbase script
-        address (string): Base58 bitcoin address for block reward
+        address (string): Base58 Bitcoin address for block reward
 
     Timeout:
         timeout (float): timeout in seconds
@@ -383,9 +385,10 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         (block submission, hashes per second) on success,
         (None, hashes per second) on timeout or nonce exhaustion.
     """
-    # Add an empty coinbase transaction to the block template
+    # Add an empty coinbase transaction to the block template transactions
     coinbase_tx = {}
     block_template['transactions'].insert(0, coinbase_tx)
+
     # Add a nonce initialized to zero to the block template
     block_template['nonce'] = 0
 
@@ -420,10 +423,11 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         while nonce <= 0xffffffff:
             # Update the block header with the new 32-bit nonce
             block_header = block_header[0:76] + nonce.to_bytes(4, byteorder='little')
+
             # Recompute the block hash
             block_hash = block_compute_raw_hash(block_header)
 
-            # Check if it the block meets the target target hash
+            # Check if it the block meets the target hash
             if block_hash < target_hash:
                 block_template['nonce'] = nonce
                 block_template['hash'] = block_hash.hex()
@@ -460,6 +464,7 @@ def standalone_miner(coinbase_message, address):
         if mined_block:
             print("Solved a block! Block hash: {}".format(mined_block['hash']))
             submission = block_make_submit(mined_block)
+
             print("Submitting:", submission, "\n")
             response = rpc_submitblock(submission)
             if response is not None:
