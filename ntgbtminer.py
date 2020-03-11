@@ -410,8 +410,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
         coinbase_tx['hash'] = tx_compute_hash(coinbase_tx['data'])
 
         # Recompute the merkle root
-        tx_hashes = [tx['hash'] for tx in block_template['transactions']]
-        block_template['merkleroot'] = tx_compute_merkle_root(tx_hashes)
+        block_template['merkleroot'] = tx_compute_merkle_root([tx['hash'] for tx in block_template['transactions']])
 
         # Reform the block header
         block_header = block_form_header(block_template)
