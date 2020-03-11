@@ -107,7 +107,7 @@ def int2varinthex(value):
     """
 
     if value < 0xfd:
-        return value.to_bytes(1, byteorder='little').hex()
+        return int2lehex(value, 1)
     elif value <= 0xffff:
         return "fd" + int2lehex(value, 2)
     elif value <= 0xffffffff:
