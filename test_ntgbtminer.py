@@ -232,11 +232,18 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(header_hash < target_hash, False)
 
     def test_block_mine(self):
-        # Manipulate the transactions in real block to look like a block template
-        block_vector['transactions'] = []
-        for i in range(1, len(block_vector['tx'])):
-            tx = {'hash': block_vector['tx'][i], 'data': 'abc'}
-            block_vector['transactions'].append(tx)
+        def reset_block_vector():
+            # Manipulate the transactions in real block to look like a block template
+            block_vector['transactions'] = []
+            for i in range(1, len(block_vector['tx'])):
+                tx = {'hash': block_vector['tx'][i], 'data': 'abc'}
+                block_vector['transactions'].append(tx)
+
+            # Copy time key to curtime key to make block look like block template
+            block_vector['curtime'] = block_vector['time']
+
+            # Clear block hash
+            block_vector['hash'] = ""
 
         # Setup generation transaction parameters with same extra nonce start as the mined black
         coinbase_message = "0400001059124d696e656420627920425443204775696c640800000037"
@@ -244,15 +251,14 @@ class TestBlock(unittest.TestCase):
         address = "14cZMQk89mRYQkDEj8Rn25AnGoBi5H6uer"
         block_vector['coinbasevalue'] = 2505860000
 
-        # Copy time key to curtime key to make block look like block template
-        block_vector['curtime'] = block_vector['time']
+        # Test timeout with different extra_nonce_start
+        reset_block_vector()
+        mined_block, hash_rate = ntgbtminer.block_mine(block_vector, coinbase_message, 0, address, timeout=1, debugnonce_start=2315460000)
+        self.assertEqual(mined_block, None)
 
-        # Clear block hash
-        block_vector['hash'] = ""
-
-        # Mine
-        (mined_block, hps) = ntgbtminer.block_mine(block_vector, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
-
+        # Test success
+        reset_block_vector()
+        mined_block, hash_rate = ntgbtminer.block_mine(block_vector, coinbase_message, extra_nonce_start, address, timeout=60, debugnonce_start=2315460000)
         self.assertEqual(mined_block['hash'], "000000000000000a369033d52a4aa264844b50857f0c6104c555d53938e9c8d7")
 
 
