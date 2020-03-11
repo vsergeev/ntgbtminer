@@ -457,9 +457,11 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 
 def standalone_miner(coinbase_message, address):
     while True:
-        print("Mining new block template...")
-        mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=60)
-        print("    {:.4f} KH/s\n".format(hps / 1000.0))
+        block_template = rpc_getblocktemplate()
+
+        print("Mining block template, height {:d}...".format(block_template['height']))
+        mined_block, hash_rate = block_mine(block_template, coinbase_message, 0, address, timeout=60)
+        print("    {:.4f} KH/s\n".format(hash_rate / 1000.0))
 
         if mined_block:
             print("Solved a block! Block hash: {}".format(mined_block['hash']))
